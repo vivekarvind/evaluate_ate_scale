@@ -61,9 +61,18 @@ def align(model,data):
     trans_error -- translational error per point (1xn)
     
     """
+    #print "model: ", model, "\ndata: ", data
+    #print "model type: ", type(model), "\ndata type: ", type(data)
+    #print "model shape: ", model.shape, "\ndata shape: ", data.shape
+    #print "model sum: ", model.sum(1), "\ndata sum: ", data.sum(1)
+    #print "model length: ", len(model), "\ndata length: ", len(data)
+    #print "model average: ", model.sum(1)/1055.0, "\ndata average: ", data.sum(1)/1055.0
+    #print "model mean: ", model.mean(1), "\ndata mean: ", data.mean(1)
     numpy.set_printoptions(precision=3,suppress=True)
     model_zerocentered = model - model.mean(1)
+    #print "model zerocentered: ", model_zerocentered
     data_zerocentered = data - data.mean(1)
+    #print "data zerocentered: ", data_zerocentered
     
     W = numpy.zeros( (3,3) )
     for column in range(model.shape[1]):
@@ -151,11 +160,12 @@ if __name__=="__main__":
     if len(matches)<2:
         sys.exit("Couldn't find matching timestamp pairs between groundtruth and estimated trajectory! Did you choose the correct sequence?")
 
-
-    first_xyz = numpy.matrix([[float(value) for value in first_list[a][0:3]] for a,b in matches]).transpose()
-    second_xyz = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:3]] for a,b in matches]).transpose()
-    rot,trans,trans_error,scale = align(second_xyz,first_xyz)
     
+    first_xyz = numpy.matrix([[float(value) for value in first_list[a][0:3]] for a,b in matches]).transpose()    
+    second_xyz = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:3]] for a,b in matches]).transpose()
+    #print "first xyz shape: ", first_xyz.shape, " second xyz shape: ", second_xyz.shape
+    #print "first xyz: ", first_xyz, "\nsecond xyz: ", second_xyz
+    rot,trans,trans_error,scale = align(second_xyz,first_xyz)
     second_xyz_aligned = scale * rot * second_xyz + trans
     
     first_stamps = first_list.keys()
@@ -164,6 +174,7 @@ if __name__=="__main__":
     
     second_stamps = second_list.keys()
     second_stamps.sort()
+    second_rot = numpy.matrix([[float(value) for value in second_list[b][3:]] for b in second_stamps]).transpose()
     second_xyz_full = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:3]] for b in second_stamps]).transpose()
     second_xyz_full_aligned = scale * rot * second_xyz_full + trans
     
@@ -183,10 +194,10 @@ if __name__=="__main__":
         file = open(args.save_associations,"w")
         file.write("\n".join(["%f %f %f %f %f %f %f %f"%(a,x1,y1,z1,b,x2,y2,z2) for (a,b),(x1,y1,z1),(x2,y2,z2) in zip(matches,first_xyz.transpose().A,second_xyz_aligned.transpose().A)]))
         file.close()
-        
+
     if args.save:
         file = open(args.save,"w")
-        file.write("\n".join(["%f "%stamp+" ".join(["%f"%d for d in line]) for stamp,line in zip(second_stamps,second_xyz_full_aligned.transpose().A)]))
+        file.write("\n".join(["%f,"%stamp+",".join(["%f"%d for d in line])+","+",".join(["%f"%r for r in rotation]) for stamp,line,rotation in zip(second_stamps,second_xyz_full_aligned.transpose().A,second_rot.transpose().A)]))
         file.close()
 
     if args.plot:

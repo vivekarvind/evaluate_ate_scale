@@ -63,9 +63,13 @@ def read_file_list(filename):
     """
     file = open(filename)
     data = file.read()
+    #print data[0]
     lines = data.replace(","," ").replace("\t"," ").split("\n") 
+    #print lines[0]
     list = [[v.strip() for v in line.split(" ") if v.strip()!=""] for line in lines if len(line)>0 and line[0]!="#"]
+    #print list[0]
     list = [(float(l[0]),l[1:]) for l in list if len(l)>1]
+    #print dict(list)
     return dict(list)
 
 def associate(first_list, second_list,offset,max_difference):
@@ -84,7 +88,9 @@ def associate(first_list, second_list,offset,max_difference):
     
     """
     first_keys = first_list.keys()
+    #print "first keys: ", first_keys 
     second_keys = second_list.keys()
+    #print "second keys: ", second_keys
     potential_matches = [(abs(a - (b + offset)), a, b) 
                          for a in first_keys 
                          for b in second_keys 
@@ -115,9 +121,9 @@ if __name__ == '__main__':
 
     first_list = read_file_list(args.first_file)
     second_list = read_file_list(args.second_file)
-
+    #print first_list, second_list
     matches = associate(first_list, second_list,float(args.offset),float(args.max_difference))    
-
+    print len(matches)
     if args.first_only:
         for a,b in matches:
             print("%f %s"%(a," ".join(first_list[a])))
